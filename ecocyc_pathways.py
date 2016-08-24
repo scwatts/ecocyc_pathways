@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# This script takes a file of EcoCyc gene names and returns the transcript gene
+# units (with assocaited promoter) for each gene
 
 # We're going to have to do this in two parts:
 #   1. Convert gene names to accessions via API search
