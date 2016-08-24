@@ -5,7 +5,9 @@
 
 # We're going to have to do this in two parts:
 #   1. Convert gene names to accessions via API search
-#   2. Make HTTP requests to API to grab common-name for transcript units
+#   2. Make HTTP requests to API to grab common-name for transcript units and promoter
+#       2a. If common-name for promoter does not exist, make another request
+#           for the promoter XML object and extract from there
 
 
 import argparse
