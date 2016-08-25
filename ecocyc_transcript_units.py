@@ -21,7 +21,7 @@ import requests
 # Constants
 GENE_SEARCH_URL = 'http://websvc.biocyc.org/xmlquery?[g:g<-ecoli^^all-genes,g^common-name="%s"]'
 TS_UNIT_URL = 'http://ecocyc.org/apixml?fn=transcription-units-of-gene&id=%s'
-PROMOTER_URL = 'http://websvc.biocyc.org/getxml?%s'
+TS_PROMOTOR_URL = 'http://ecocyc.org/apixml?fn=transcription-unit-promoter&id=%s'
 
 
 def get_arguments():
@@ -57,6 +57,11 @@ def main():
         # Convert parse XML structure and grab the Gene tag
         gene_search_xml = et.fromstring(gene_search_response.text)
         gene_tag = gene_search_xml.find('Gene')
+
+        if not gene_tag:
+            print(gene, 'no_gene_found_in_ecoli_db')
+            continue
+
         gene_accession = gene_tag.get('ID')
 
 
@@ -69,30 +74,32 @@ def main():
 
         # Extract desired parts from XML
         for ts in ts_unit_xml.findall('Transcription-Unit'):
-            # First get the promoter name
-            promoter_xml = ts.find('component/Promoter')
 
-            # In some cases the API returns XML data that does not contain the
-            # common name for the promoter. In these such cases, we can grab
-            # the EcoCyc accession and make another request for the specific
-            # promoter and grab the common name from there
-            try:
-                # Promoter common-name exists in XML
-                promoter_name = promoter_xml.find('common-name').text
-            except AttributeError:
-                # No promoter common-name, finding accession to make request
-                promoter_id = promoter_xml.get('resource').replace('#', '')
 
-                # Making request and parse XML
-                promoter_page_reponse = requests.get(PROMOTER_URL % promoter_id)
-                promoter_page_xml = et.fromstring(promoter_page_reponse.text)
+            unit_genes_tag = ts.find('common-name')
+            if not unit_genes_tag:
+                unit_genes = gene
+            else:
+                unit_genes = unit_genes_tag.text
 
-                # Extract promoter common-name
-                promoter_name = promoter_page_xml.find('Promoter/common-name').text
 
-            # Lastly, grab the genes in the transcript unit and then print
-            unit_genes = ts.find('common-name').text
-            print(gene, promoter_name, unit_genes, sep='\t', flush=True)
+            ts_accession = ts.get('ID')
+
+
+            # Get transcript unit promoter xml
+            ts_promoters_response = requests.get(TS_PROMOTOR_URL % ts_accession)
+            ts_promoter_xml = et.fromstring(ts_promoters_response.text)
+
+
+            ts_promoters = ts_promoter_xml.findall('Promoter/common-name')
+
+            if not ts_promoters:
+                print(gene, 'no_promoter_with_evidence')
+                continue
+
+            for ts_promoter in ts_promoters:
+                promoter_name = ts_promoter.text
+                print(gene, promoter_name, unit_genes, sep='\t', flush=True)
 
 
 if __name__ == '__main__':
