@@ -59,7 +59,7 @@ def main():
 
         # Sometimes a gene won't be found in the ecoli database (it may be
         # present in anther however). Either way, if not found we skipped
-        if not gene_tag:
+        if gene_tag is None:
             print(gene, 'no_gene_found_in_ecoli_db')
             continue
 
@@ -80,7 +80,7 @@ def main():
             unit_genes_tag = ts.find('common-name')
             # Sometimes the XML response object does not contain a common name,
             # so we set it to the gene name
-            if not unit_genes_tag:
+            if unit_genes_tag is None:
                 unit_genes = gene
             else:
                 unit_genes = unit_genes_tag.text
